@@ -1,0 +1,8 @@
+/.envguard-job.json
+/.entry-check/
+/PROMPT.md
+/codex-*.log
+/entry.png
+/REPORT.md
+/output/
+__pycache__/
