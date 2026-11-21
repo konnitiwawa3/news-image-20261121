@@ -6,7 +6,7 @@
 
 A Saturday front page for 21 November 2026 UTC covering 21 stories. Three illustrations lead the page, followed by eight desk stories, four market readings and ten briefs. Bitcoin and Ether are sampled at noon UTC. The traditional markets show Friday’s closes.
 
-The offline generator uses Python 3.13 and its standard library. The typesetting and seeded paper texture come from our [20 November edition](https://github.com/konnitiwawa3/news-image-20261120/tree/bc6ede0a2d180b8c964452d03113d072abf6da7c).
+The offline generator uses Python 3.13 and its standard library. It sets each line of the edition from editable copy and prints it on Astryx Stone Light stock. The illustrations and original type design come from the newspaper's [first printing](https://github.com/konnitiwawa3/news-image-20261121/tree/8b898ddd115d1219dc71b3c7768f7e274aec74dd).
 
 ## Run it
 
@@ -14,7 +14,16 @@ The offline generator uses Python 3.13 and its standard library. The typesetting
 MAKEFUN_OUTPUT_DIR=./output python3.13 -P -s main.py
 ```
 
-Open `output/entry.png` to read the page. The embedded glyph masks are derived from Source Sans 3 and Newsreader, with their SIL Open Font License notices in [`fonts/`](fonts/).
+Open `output/entry.png` to read the page. The glyph masks are derived from Source Sans 3 and Newsreader. Their SIL Open Font License notices are in [fonts/](fonts/).
+
+## Printing materials
+
+The copy, section, face, size, horizontal fit and baseline of each line are in `materials/composition.tsv`. The press positions each letter on a three-dot grid, adds ink spread to the display type, and resolves nine ink samples per output pixel against the stock and wear maps. All of these materials can be regenerated from the first printing's source.
+
+```sh
+git show 8b898ddd115d1219dc71b3c7768f7e274aec74dd:main.py > /tmp/news-first-printing.py
+python3.13 tools/import_edition.py /tmp/news-first-printing.py materials
+```
 
 ---
 
