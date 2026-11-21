@@ -1,52 +1,52 @@
 {
-  "paper": "The World in Brief",
-  "folio": "21 Reports, UTC Edition",
-  "edition": "Saturday, 21 November 2026",
+  "masthead": ["The World in Brief", "Saturday, 21 November 2026", "21 Reports, UTC Edition"],
   "leads": [
     {
-      "headline": ["THREE TANKERS", "HIT NEAR HORMUZ"],
-      "story": "Projectiles hit two tankers leaving the Gulf. Iran says a third ship struck a mine east of the strait.",
-      "credit": "Shipping reports  /  AP"
+      "title": ["THREE TANKERS", "HIT NEAR HORMUZ"],
+      "body": "Projectiles hit two tankers leaving the Gulf. Iran says a third ship struck a mine east of the strait.",
+      "byline": "Shipping reports  /  AP"
     },
     {
-      "headline": ["COP31 SPLITS", "ON FOSSIL FUELS"],
-      "story": "The EU and Pacific islands press for fossil fuel cuts. African negotiators seek more money for adaptation.",
-      "credit": "Antalya  /  BBC"
+      "title": ["COP31 SPLITS", "ON FOSSIL FUELS"],
+      "body": "The EU and Pacific islands press for fossil fuel cuts. African negotiators seek more money for adaptation.",
+      "byline": "Antalya  /  BBC"
     },
     {
-      "headline": ["RIEMANN PROOF", "PASSES CHECKS"],
-      "story": "Independent tools verify the Lean proof of a conjecture about prime numbers first posed in 1859.",
-      "credit": "Lean community  /  Mathlib"
+      "title": ["RIEMANN PROOF", "PASSES CHECKS"],
+      "body": "Independent tools verify the Lean proof of a conjecture about prime numbers first posed in 1859.",
+      "byline": "Lean community  /  Mathlib"
     }
   ],
   "desk": [
-    {"heading": ["Missile hits", "Kryvyi Rih"], "lines": ["Two killed and 60 wounded", "in the Ukrainian city."]},
-    {"heading": ["Mexico captures", "El Chapo Isidro"], "lines": ["11 die in violence in Sinaloa."]},
-    {"heading": ["Geneva arms talks stall"], "lines": ["Nations fail to set treaty talks", "on autonomous weapons."]},
-    {"heading": ["Gaza food truck hit"], "lines": ["Three men killed in Israeli strike."]},
-    {"heading": ["Fire in Bahrain"], "lines": ["Ministry reports an Iranian strike", "on a civilian industrial site."]},
-    {"heading": ["Cargo ship burns in Baltic"], "lines": ["Sparta II drifts into Finnish waters."]},
-    {"heading": ["300 return by trawler"], "lines": ["After Cyclone Akvan, about 1,200", "remain on a Bangladeshi island."]},
-    {"heading": ["Basra power plant fire"], "lines": ["At least four dead and 35 injured."]}
+    [["Missile hits", "Kryvyi Rih"], ["Two killed and 60 wounded", "in the Ukrainian city."]],
+    [["Mexico captures", "El Chapo Isidro"], ["11 die in violence in Sinaloa."]],
+    [["Geneva arms talks stall"], ["Nations fail to set treaty talks", "on autonomous weapons."]],
+    [["Gaza food truck hit"], ["Three men killed in Israeli strike."]],
+    [["Fire in Bahrain"], ["Ministry reports an Iranian strike", "on a civilian industrial site."]],
+    [["Cargo ship burns in Baltic"], ["Sparta II drifts into Finnish waters."]],
+    [["300 return by trawler"], ["After Cyclone Akvan, about 1,200", "remain on a Bangladeshi island."]],
+    [["Basra power plant fire"], ["At least four dead and 35 injured."]]
   ],
-  "markets": [
-    {"asset": "S&P 500", "quote": "6,910.39"},
-    {"asset": "Brent", "quote": "$92.57"},
-    {"asset": "Bitcoin", "quote": "$58,110.53"},
-    {"asset": "Ether", "quote": "$1,649.83"}
+  "quotes": [
+    ["S&P 500", "6,910.39"],
+    ["Brent", "$92.57"],
+    ["Bitcoin", "$58,110.53"],
+    ["Ether", "$1,649.83"]
   ],
   "briefs": [
-    {"title": "Magnitude 6.8 near Timor-Leste", "detail": "USGS locates the quake northeast of Lospalos."},
-    {"title": "Aoun urges Israeli withdrawal", "detail": "He also urges Hezbollah to give up its arms."},
-    {"title": "Rutte backs Poland in Warsaw", "detail": "NATO chief condemns Friday’s airspace breach."},
-    {"title": "FBI investigates possible database breach", "detail": "Reports point to the national crime database."},
-    {"title": "India’s Congress youth wing releases video", "detail": "Footage shows Friday’s protests at Meta offices."},
-    {"title": "Magnitude 6.7 in Peru’s Andes", "detail": "The quake struck at 7:09 p.m. Friday local time."},
-    {"title": "African football backs Infantino", "detail": "CAF chief says all 54 members back his bid."},
-    {"title": "Ukraine defends Crimea bridge strikes", "detail": "Zelensky calls the strikes a response to attacks."},
-    {"title": "Australia wins T20 opener", "detail": "England beaten by three wickets in Melbourne."},
-    {"title": "Alcaraz reaches Turin final", "detail": "He beats Ben Shelton in a third-set tiebreak."}
+    ["Magnitude 6.8 near Timor-Leste", "USGS locates the quake northeast of Lospalos."],
+    ["Aoun urges Israeli withdrawal", "He also urges Hezbollah to give up its arms."],
+    ["Rutte backs Poland in Warsaw", "NATO chief condemns Friday’s airspace breach."],
+    ["FBI investigates possible database breach", "Reports point to the national crime database."],
+    ["India’s Congress youth wing releases video", "Footage shows Friday’s protests at Meta offices."],
+    ["Magnitude 6.7 in Peru’s Andes", "The quake struck at 7:09 p.m. Friday local time."],
+    ["African football backs Infantino", "CAF chief says all 54 members back his bid."],
+    ["Ukraine defends Crimea bridge strikes", "Zelensky calls the strikes a response to attacks."],
+    ["Australia wins T20 opener", "England beaten by three wickets in Melbourne."],
+    ["Alcaraz reaches Turin final", "He beats Ben Shelton in a third-set tiebreak."]
   ],
-  "date_note": "21 November in UTC. Peru’s quake and the Sinaloa arrest fell on Friday evening locally. Edition closed at 20:40 UTC.",
-  "sources": "Reporting: AP, BBC, Reuters, Al Jazeera, The Guardian and Prothom Alo. Data: USGS, Lean community and Coinbase Exchange."
+  "footer": [
+    "21 November in UTC. Peru’s quake and the Sinaloa arrest fell on Friday evening locally. Edition closed at 20:40 UTC.",
+    "Reporting: AP, BBC, Reuters, Al Jazeera, The Guardian and Prothom Alo. Data: USGS, Lean community and Coinbase Exchange."
+  ]
 }

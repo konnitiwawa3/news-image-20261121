@@ -1,98 +1,72 @@
-"""Recover editable type and print materials from the 21 November source edition.
-
-Use the main.py from the commit identified in the README as the input.
-The program is executed only after its digest is checked. No finished image
-is read. The resulting plate contains engravings and rules, without type.
-"""
-
+"""Extract reusable typesetting materials from the published first printing."""
 import argparse
-from hashlib import sha256
+import hashlib
 import json
 from pathlib import Path
 import runpy
 import zlib
 
 
-SOURCE_DIGEST = "fe04930fd3bd3f8185915d654dfe51da068aded51b5ac942cabd967ce9434463"
-SECTIONS = (
-    ("folio", "masthead"),
-    ("leads", "lead_stories"),
-    ("desk", "news_desk"),
-    ("quotes", "markets"),
-    ("briefs", "news_briefs"),
-    ("credits", "footer"),
-)
+FIRST_PRINT = "fe04930fd3bd3f8185915d654dfe51da068aded51b5ac942cabd967ce9434463"
+DRAW_ORDER = ("masthead", "lead_stories", "news_desk", "markets", "news_briefs", "footer")
 
 
-def compressed(directory, name, data):
-    (directory / name).write_bytes(zlib.compress(data, level=9))
+def artwork(module):
+    drawing = module["Canvas"]()
+    wear = module["Canvas"]()
+    used = set()
+
+    def record_type(x, y, text, style, color=1, **settings):
+        used.add(style)
+        if settings.get("distress"):
+            wear.text(x, y, text, style, color, **settings)
+
+    drawing.text = record_type
+    for section in DRAW_ORDER:
+        module[section](drawing)
+    fonts = module["font_data"]()
+    face_data = {name: fonts[name] for name in used}
+    yield "glyphs.json.z", json.dumps(face_data, sort_keys=True, separators=(",", ":")).encode()
+    yield "press-wear.z", wear.abrasion
+    yield "engravings-and-rules.z", drawing.pixels
 
 
-def separate_type(source, directory):
-    plate = source["Canvas"]()
-    proofs = source["Canvas"]()
-    faces = set()
-    def separate(x, baseline, words, face, color=1, **options):
-        faces.add(face)
-        if options.get("distress"):
-            # Only the loss-of-ink mask is retained from these impressions.
-            proofs.text(x, baseline, words, face, color, **options)
-
-    plate.text = separate
-    for _, draw in SECTIONS:
-        source[draw](plate)
-    compressed(directory, "engravings-and-rules.z", plate.pixels)
-    compressed(directory, "press-wear.z", proofs.abrasion)
-    return faces
+def stock_rows(module):
+    pressure = module["print_field"](module["Random"](module["PRINT_SEED"] + 4), 11, 18)
+    for paper, roller in zip(module["Newsprint"]().rows(), pressure, strict=True):
+        row = bytearray()
+        for (tone, seed), force in zip(paper, roller, strict=True):
+            height = seed >> 27
+            ink_bias = (height + force - 16) // 10
+            wear = max(height + force // 3 - 24, 0) * 3
+            row.extend((41 + tone, 128 + ink_bias, wear))
+        yield row
 
 
-def export_faces(source, directory, faces):
-    collection = source["font_data"]()
-    selected = {key: collection[key] for key in sorted(faces)}
-    payload = json.dumps(selected, sort_keys=True, separators=(",", ":")).encode()
-    compressed(directory, "glyphs.json.z", payload)
-
-
-def export_stock(source, directory):
-    # The three channels describe an unprinted sheet. They carry the paper
-    # color index, the local change in ink density, and the fine surface wear.
-    width = source["SIZE"]
-    channels = bytearray(width * width * 3)
-    grain = source["Newsprint"]().rows()
-    roller = source["Random"](source["PRINT_SEED"] + 4)
-    pressure = source["print_field"](roller, 11, 18)
-    offset = 0
-    for sheet_row, pressure_row in zip(grain, pressure, strict=True):
-        for (shade, point), density in zip(sheet_row, pressure_row, strict=True):
-            height = point >> 27
-            channels[offset] = shade + 41
-            channels[offset + 1] = 128 + (density + height - 16) // 10
-            channels[offset + 2] = 3 * max(0, height + density // 3 - 24)
-            offset += 3
-    if offset != len(channels):
-        raise ValueError("The imported paper does not cover the sheet")
-    compressed(directory, "paper-stock.z", channels)
-    stock = source["paper_colors"]()
-    swatches = {
-        "stock": [list(stock[index]) for index in sorted(stock)],
-        "ink": [list(color) for color in source["PALETTE"]],
+def extract(original, output):
+    if hashlib.sha256(original.read_bytes()).hexdigest() != FIRST_PRINT:
+        raise ValueError("Input does not match the fixed first-print source")
+    module = runpy.run_path(str(original))
+    output.mkdir(exist_ok=True, parents=True)
+    for name, raw in artwork(module):
+        (output / name).write_bytes(zlib.compress(raw, 9))
+    compressor = zlib.compressobj(9)
+    encoded = bytearray()
+    for row in stock_rows(module):
+        encoded.extend(compressor.compress(row))
+    encoded.extend(compressor.flush())
+    (output / "paper-stock.z").write_bytes(encoded)
+    tones = module["paper_colors"]()
+    colors = {
+        "stock": [list(tones[key]) for key in sorted(tones)],
+        "ink": [list(rgb) for rgb in module["PALETTE"]],
     }
-    (directory / "swatches.json").write_text(json.dumps(swatches) + "\n", encoding="utf8")
-
-
-def import_edition():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", type=Path)
-    parser.add_argument("directory", type=Path)
-    options = parser.parse_args()
-    if sha256(options.source.read_bytes()).hexdigest() != SOURCE_DIGEST:
-        parser.error("The file does not match the published 21 November source")
-    source = runpy.run_path(str(options.source))
-    options.directory.mkdir(parents=True, exist_ok=True)
-    faces = separate_type(source, options.directory)
-    export_faces(source, options.directory, faces)
-    export_stock(source, options.directory)
+    (output / "swatches.json").write_text(json.dumps(colors) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
-    import_edition()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("original", type=Path)
+    parser.add_argument("output", type=Path)
+    args = parser.parse_args()
+    extract(args.original, args.output)
