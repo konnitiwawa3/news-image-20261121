@@ -6,7 +6,6 @@ is read. The resulting plate contains engravings and rules, without type.
 """
 
 import argparse
-import csv
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -33,24 +32,15 @@ def separate_type(source, directory):
     plate = source["Canvas"]()
     proofs = source["Canvas"]()
     faces = set()
-    with (directory / "composition.tsv").open("w", encoding="utf8", newline="") as stream:
-        writer = csv.writer(stream, dialect="excel-tab", lineterminator="\n")
-        writer.writerow(("section", "anchor_x", "baseline", "face", "alignment",
-                         "scale", "stretch", "letterspace", "worn", "color", "copy"))
+    def separate(x, baseline, words, face, color=1, **options):
+        faces.add(face)
+        if options.get("distress"):
+            # Only the loss-of-ink mask is retained from these impressions.
+            proofs.text(x, baseline, words, face, color, **options)
 
-        def record(x, baseline, words, face, color=1, **options):
-            faces.add(face)
-            writer.writerow((section, x, baseline, face, options.get("align", "left"),
-                             options.get("scale", 1), options.get("squeeze", 1),
-                             options.get("tracking", 0), int(options.get("distress", False)),
-                             color, words))
-            if options.get("distress"):
-                # Only the loss-of-ink mask is retained from these impressions.
-                proofs.text(x, baseline, words, face, color, **options)
-
-        plate.text = record
-        for section, draw in SECTIONS:
-            source[draw](plate)
+    plate.text = separate
+    for _, draw in SECTIONS:
+        source[draw](plate)
     compressed(directory, "engravings-and-rules.z", plate.pixels)
     compressed(directory, "press-wear.z", proofs.abrasion)
     return faces

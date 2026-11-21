@@ -18,7 +18,7 @@ Open `output/entry.png` to read the page. The glyph masks are derived from Sourc
 
 ## Printing materials
 
-The copy, section, face, size, horizontal fit and baseline of each line are in `materials/composition.tsv`. The press positions each letter on a three-dot grid, adds ink spread to the display type, and resolves nine ink samples per output pixel against the stock and wear maps. All of these materials can be regenerated from the first printing's source.
+The editorial copy is grouped by story in `edition.json`. The press wraps the leads to the widths of the three columns, sets the market quotations using measured type widths, and places the ten briefs in two stacks. It positions each letter on a three-dot grid, adds ink spread to the display type, and resolves nine ink samples per output pixel against the stock and wear maps. The fonts, stock, engravings, rulings and press-wear maps can be regenerated from the first printing's source.
 
 ```sh
 git show 8b898ddd115d1219dc71b3c7768f7e274aec74dd:main.py > /tmp/news-first-printing.py

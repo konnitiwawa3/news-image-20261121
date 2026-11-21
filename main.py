@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 from dataclasses import dataclass
 from functools import lru_cache
 import json
@@ -77,27 +76,16 @@ class Line:
     alignment: str
     sx: float
     sy: float
-    space: int
     worn: bool
-    color: int
-
-    @classmethod
-    def from_record(cls, row):
-        sy = float(row["scale"])
-        return cls(face=row["face"], copy=row["copy"], anchor=float(row["anchor_x"]),
-                   baseline=round(float(row["baseline"]) * DOTS), alignment=row["alignment"],
-                   sx=sy * float(row["stretch"]), sy=sy,
-                   space=round(DOTS * float(row["letterspace"])), worn=row["worn"] == "1",
-                   color=int(row["color"]))
 
     def positions(self, alphabet):
         widths = [round(alphabet[letter].step * self.sx) for letter in self.copy]
-        line_length = sum(widths) + max(0, len(widths) - 1) * self.space
+        line_length = sum(widths)
         fraction = {"left": 0, "right": 1, "center": 0.5}[self.alignment]
         cursor = round((self.anchor - fraction * (line_length / DOTS)) * DOTS)
         for letter, width in zip(self.copy, widths):
             yield cursor, letter
-            cursor += width + self.space
+            cursor += width
 
 
 def impression_number(column, row):
@@ -120,12 +108,7 @@ class Forme:
         alphabet = self.type.faces[line.face]
         for index, (cursor, letter) in enumerate(line.positions(alphabet)):
             pattern = impression_number(cursor + 29 * index, line.baseline + ord(letter))
-            color = line.color
-            if color == 1:
-                if line.worn:
-                    color = 8 + pattern % 5
-                else:
-                    color = 5 + pattern % 3
+            color = 8 + pattern % 5 if line.worn else 5 + pattern % 3
             dx, dy, rows = self.type.cast(line.face, letter, line.sx, line.sy)
             left = cursor + dx
             for offset, filled in enumerate(rows):
@@ -150,10 +133,100 @@ class Forme:
             if self.dots[at] == 0:
                 self.dots[at] = 13
 
+    def put(self, words, face, x, y, size=1, fit=1, align="left", worn=False):
+        self.set_line(Line(face, words, x, round(y * DOTS), align, size * fit, size, worn))
+
+    def measure(self, text, face, size=1):
+        alphabet = self.type.faces[face]
+        return sum(round(alphabet[c].step * size) for c in text) / DOTS
+
+    def paragraph(self, text, x, y, measure, step, max_lines):
+        words = text.split()
+        composed = []
+        current = []
+        for word in words:
+            attempt = " ".join([*current, word])
+            if current and self.measure(attempt, "news14") > measure:
+                composed.append(" ".join(current))
+                current = []
+            current.append(word)
+        if current:
+            composed.append(" ".join(current))
+        if len(composed) > max_lines:
+            raise ValueError(f"Overflow in lead at column {x}")
+        for i, copy in enumerate(composed):
+            self.put(copy, "news14", x, y + step * i)
+
+    def leads(self, stories):
+        # Anchor points follow the three engravings on the unlettered plate.
+        columns = (
+            (32, 176, 249, 283, 423, 47, 17, "display55", .94, .74, 2),
+            (488, 345, 398, 457, 226, 29, 15, "display27", 1.01, .84, 4),
+            (752, 345, 398, 458, 237, 29, 15, "display27", 1.01, .86, 4),
+        )
+        for story, spec in zip(stories, columns, strict=True):
+            x, head_y, body_y, credit_y, width, head_step, step, face, size, fit, limit = spec
+            for row, copy in enumerate(story["headline"]):
+                self.put(copy, face, x, head_y + row * head_step, size, fit, worn=True)
+            self.paragraph(story["story"], x, body_y, width, step, limit)
+            self.put(story["credit"], "news12", x, credit_y)
+        self.put("OIL TRAFFIC  /  STRAIT OF HORMUZ", "news12", 36, 456)
+        self.put("THE CRITICAL LINE", "news12", 875, 140, align="center")
+        self.put("Real part of a zeta zero", "news12", 875, 312, align="center")
+        for x, tick in zip((802, 871, 940), ("0", "1/2", "1")):
+            self.put(tick, "news12", x, 293, align="center")
+        for zero in (14.13, 21.02, 25.01):
+            self.put(str(zero), "news12", 882, 281 - zero * 4.5)
+
+    def news_columns(self, stories):
+        self.put("The News Desk", "display22", 32, 489, .78)
+        slots = ((32, 527), (32, 630), (349, 521), (349, 591),
+                 (349, 656), (668, 521), (668, 579), (668, 659))
+        for (x, y), story in zip(slots, stories, strict=True):
+            wide_type = x == 32
+            face = "display27" if wide_type else "display22"
+            leading = 29 if wide_type else 23
+            for i, title in enumerate(story["heading"]):
+                self.put(title, face, x, y + i * leading, 1.04)
+            baseline = y + (len(story["heading"]) - 1) * leading + 21
+            for i, detail in enumerate(story["lines"]):
+                self.put(detail, "news14", x, baseline + i * 18, 1.15)
+
+    def market_strip(self, quotes):
+        label = "Markets  /  Friday closes    ·    Crypto  /  Saturday noon UTC"
+        self.put(label, "display22", 32, 724, .64)
+        cursor = 32
+        for i, item in enumerate(quotes):
+            if i > 0:
+                self.put("·", "display22", cursor + 7, 746)
+                cursor += 22
+            self.put(item["asset"], "news14", cursor, 747, 1.12)
+            cursor += self.measure(item["asset"], "news14", 1.12) + 7
+            self.put(item["quote"], "display27", cursor, 748, 1.14)
+            cursor += self.measure(item["quote"], "display27", 1.14)
+        if cursor > PAGE - 32:
+            raise ValueError("Quotes exceed the width of the edition")
+
+    def short_reports(self, reports):
+        self.put("In Brief", "display22", PAGE / 2, 771, .82, align="center")
+        for i, item in enumerate(reports):
+            x = 32 if i < 5 else 530
+            y = 796 + (i % 5) * 40
+            self.put(item["title"], "display22", x, y, .96)
+            self.put(item["detail"], "news14", x, y + 18, 1.22)
+
     def compose(self):
-        with (MATERIALS / "composition.tsv").open(encoding="utf8", newline="") as table:
-            for record in csv.DictReader(table, dialect="excel-tab"):
-                self.set_line(Line.from_record(record))
+        articles = json.loads((MATERIALS.parent / "edition.json").read_bytes())
+        self.put(articles["paper"], "display22", 32, 19, .66)
+        self.put(articles["folio"], "display22", PAGE - 32, 19, .66, align="right")
+        self.put(articles["edition"], "display55", PAGE / 2, 89, 1.32, .88, "center", True)
+        self.leads(articles["leads"])
+        self.news_columns(articles["desk"])
+        self.market_strip(articles["markets"])
+        self.short_reports(articles["briefs"])
+        self.put("DATE CHECK", "display22", 32, 999, .73)
+        self.put(articles["date_note"], "news12", 147, 999, 1.05)
+        self.put(articles["sources"], "news12", 32, 1015, fit=.91)
 
 
 class Press:
